@@ -203,10 +203,7 @@ var Sandbox;
 
     /**
     * Starts a module by calling its factory function and passing in a new toolbox instance
-    * @example
-    *
-    * Sandbox.start('MyModule'[, arg1[, arg2[, ...]]]);
-    *
+    * @example Sandbox.start('MyModule'[, arg1[, arg2[, ...]]]);
     * @memberof Sandbox
     * @param {String} modName - module name
     * @param {Any} [...args] - other arguments
@@ -225,7 +222,7 @@ var Sandbox;
             if (!mod.instance) {
                 toolbox = new Toolbox(mod.requires);
                 args.unshift(toolbox);
-                mod.instance = mod.factory.call(null, args);
+                mod.instance = mod.factory.apply(null, args);
             }
 
             return mod.instance;
@@ -235,23 +232,95 @@ var Sandbox;
     }
     Sandbox.start = start;
 
-    function use(modName, requires, creator, args) {
+    /**
+    * Uses a module right away - registers and starts it
+    * @example
+    *
+    * Sandbox.use('MyModule', {
+    *   module1: instance1,
+    *   module2: instance2
+    * }, function (toolbox) {
+    *
+    *   // toolbox.module1 is available here
+    *   // toolbox.module2 is available here
+    *
+    * });
+    *
+    * @memberof Sandbox
+    * @param {String} modName - module name
+    * @param {Array<String>|String} [requires] - list of required modules
+    * @param {Function} factory - creator function of this module
+    * @returns {Object} module instance
+    */
+    function use(modName, requires, factory) {
+        if (typeof requires === 'function') {
+            factory = requires;
+            requires = [];
+        }
+
+        register(modName, requires, factory);
+        return start(modName);
     }
     Sandbox.use = use;
 
+    /**
+    * Starts all the modules registered. Order is not guarantee
+    * @example Sandbox.startAll();
+    * @memberof Sandbox
+    * @public
+    */
     function startAll() {
+        for (var modName in modules) {
+            if (modules.hasOwnProperty(modName)) {
+                start(modName);
+            }
+        }
     }
     Sandbox.startAll = startAll;
 
-    function stop(modName, args) {
+    /**
+    * Stops a module destroying its instance
+    * @example Sandbox.stop('MyModule'[, arg1[, arg2[, ...]]]);
+    * @memberof Sandbox
+    * @param {String} modName - module name
+    * @param {Any} [...args] - other arguments
+    * @public
+    */
+    function stop(modName) {
+        var args = [];
+        for (var _i = 0; _i < (arguments.length - 1); _i++) {
+            args[_i] = arguments[_i + 1];
+        }
+        var mod = modules[modName];
+
+        if (mod && mod.instance) {
+            if (typeof mod.instance.destroy === 'function') {
+                mod.instance.destroy.apply(mod.instance, args);
+            }
+        }
     }
     Sandbox.stop = stop;
 
+    /**
+    * Stops all the modules
+    * @example Sandbox.stopAll();
+    * @memberof Sandbox
+    * @public
+    */
     function stopAll() {
     }
     Sandbox.stopAll = stopAll;
 
+    /**
+    * Stops and removes a module in order to free memory
+    * @example Sandbox.remove('MyModule')
+    * @param modName
+    */
     function remove(modName) {
+        var args = [];
+        for (var _i = 0; _i < (arguments.length - 1); _i++) {
+            args[_i] = arguments[_i + 1];
+        }
     }
     Sandbox.remove = remove;
 
