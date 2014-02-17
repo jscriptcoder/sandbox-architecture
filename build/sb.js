@@ -202,7 +202,7 @@ var Sandbox;
     Sandbox.run = run;
 
     /**
-    * Starts a module by calling its factory function and passing in a new toolbox instance
+    * Starts a module by calling its factory function and passing a new toolbox instance in
     * @example Sandbox.start('MyModule'[, arg1[, arg2[, ...]]]);
     * @memberof Sandbox
     * @param {String} modName - module name
@@ -264,7 +264,7 @@ var Sandbox;
     Sandbox.use = use;
 
     /**
-    * Starts all the modules registered. Order is not guarantee
+    * Starts all the modules registered. Order is not guaranteed
     * @example Sandbox.startAll();
     * @memberof Sandbox
     * @public
@@ -297,6 +297,8 @@ var Sandbox;
             if (typeof mod.instance.destroy === 'function') {
                 mod.instance.destroy.apply(mod.instance, args);
             }
+
+            modules[modName].instance = null;
         }
     }
     Sandbox.stop = stop;
@@ -308,27 +310,85 @@ var Sandbox;
     * @public
     */
     function stopAll() {
+        for (var modName in modules) {
+            if (modules.hasOwnProperty(modName)) {
+                stop(modName);
+            }
+        }
     }
     Sandbox.stopAll = stopAll;
 
     /**
     * Stops and removes a module in order to free memory
     * @example Sandbox.remove('MyModule')
-    * @param modName
+    * @memberof Sandbox
+    * @param {String} modName
+    * @param {Any} [...args] - other arguments
+    * @public
     */
     function remove(modName) {
         var args = [];
         for (var _i = 0; _i < (arguments.length - 1); _i++) {
             args[_i] = arguments[_i + 1];
         }
+        args.unshift(modName);
+        stop.apply(null, args);
     }
     Sandbox.remove = remove;
 
+    /**
+    * Removes all the modules
+    * @example Sandbox.removeAll();
+    * @memberof Sandbox
+    * @public
+    */
     function removeAll() {
+        for (var modName in modules) {
+            if (modules.hasOwnProperty(modName)) {
+                remove(modName);
+            }
+        }
     }
     Sandbox.removeAll = removeAll;
 
+    /**
+    * Extends the toolbox adding new functionality to all the instances
+    * @example
+    *
+    * // extending toolbox
+    * Sandbox.extend('myNewExtension', function (args) {...});
+    * Sandbox.extend('myAttribute', true);
+    * Sandbox.extend(function (tbproto) {
+    *
+    *   var MyClass = function () {...};
+    *   MyClass.prototype.method = function () {...};
+    *
+    *   tbproto.MyClass = MyClass;
+    *
+    * });
+    *
+    * // how to use it
+    * Sandbox.register('AnotherModule', function (toolbox) {
+    *
+    *   // import new stuff from the toolbox
+    *   var myNewExtension = toolbox.myNewExtension;
+    *   var newAttribute = toolbox.newAttribute;
+    *   var MyClass = toolbox.MyClass;
+    *
+    * });
+    *
+    * @memberof Sandbox
+    * @param {String} name - name of the member
+    * @param {Any} member - member to add to the toolbox
+    */
     function extend(name, member) {
+        if (typeof name === 'function') {
+            name(Toolbox.prototype);
+        } else if (!Toolbox.prototype[name]) {
+            Toolbox.prototype[name] = member;
+        } else {
+            throw Error(name + ' is already added to the toolbox');
+        }
     }
     Sandbox.extend = extend;
 })(Sandbox || (Sandbox = {}));
