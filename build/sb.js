@@ -27,6 +27,7 @@ var Sandbox;
     * Returns module definition
     * @param {String} moduleName
     * @returns Object
+    * @private
     */
     function getModule(moduleName) {
         return modules[moduleName];
@@ -36,6 +37,7 @@ var Sandbox;
     * Returns module instance
     * @param {String} moduleName
     * @returns Object
+    * @private
     */
     function getInstance(moduleName) {
         var mod = modules[moduleName];
@@ -391,4 +393,7 @@ var Sandbox;
         }
     }
     Sandbox.extend = extend;
+
+    // this is for testing purposes
+    Sandbox.__modules__ = modules;
 })(Sandbox || (Sandbox = {}));

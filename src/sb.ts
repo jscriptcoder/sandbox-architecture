@@ -29,6 +29,7 @@ module Sandbox {
      * Returns module definition
      * @param {String} moduleName
      * @returns Object
+     * @private
      */
     function getModule(moduleName) {
         return modules[moduleName];
@@ -38,6 +39,7 @@ module Sandbox {
      * Returns module instance
      * @param {String} moduleName
      * @returns Object
+     * @private
      */
     function getInstance(moduleName) {
         var mod = modules[moduleName];
@@ -398,4 +400,7 @@ module Sandbox {
         }
 
     }
+
+    // this is for testing purposes
+    export var __modules__ = modules;
 }
