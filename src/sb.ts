@@ -99,11 +99,13 @@ module Sandbox {
                             } else if (typeof mod.factory === 'function') {
 
                                 // loads dependencies recursively
-                                if (mod.requires) {
-                                    Toolbox.call(this, mod.requires);
+                                if (mod.requires.length) {
+                                    mod.instance = mod.factory(new Toolbox(mod.requires));
+                                } else {
+                                    mod.instance = mod.factory(this);
                                 }
 
-                                this[modName] = mod.instance = mod.factory(this);
+                                this[modName] = mod.instance;
 
                             }
 

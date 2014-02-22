@@ -91,11 +91,13 @@ var Sandbox;
                                 _this[modName] = mod.instance;
                             } else if (typeof mod.factory === 'function') {
                                 // loads dependencies recursively
-                                if (mod.requires) {
-                                    Toolbox.call(_this, mod.requires);
+                                if (mod.requires.length) {
+                                    mod.instance = mod.factory(new Toolbox(mod.requires));
+                                } else {
+                                    mod.instance = mod.factory(_this);
                                 }
 
-                                _this[modName] = mod.instance = mod.factory(_this);
+                                _this[modName] = mod.instance;
                             }
                         } else {
                             throw Error(modName + ' already exists in the toolbox.');

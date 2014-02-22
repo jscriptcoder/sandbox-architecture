@@ -91,15 +91,16 @@ describe('Global Sandbox API', function () {
 
     it('starts modules [Sandbox.start]', function () {
 
-        var modStarted = false,
+        var modules = Sandbox.__modules__,
+            modStarted = false,
             modHasDep1 = false,
-            modHasNotDep2 = false,
+            modHasNoDep2 = false,
             param1, param2;
 
         Sandbox.register('ModuleToBeStarted', 'ModuleTest1', function (toolbox, p1, p2) {
             modStarted = true;
             modHasDep1 = !!toolbox.ModuleTest1;
-            modHasNotDep2 = !toolbox.ModuleTest2;
+            modHasNoDep2 = !toolbox.ModuleTest2;
 
             param1 = p1;
             param2 = p2;
@@ -110,9 +111,12 @@ describe('Global Sandbox API', function () {
             };
         });
 
+        expect(modules['ModuleToBeStarted']).toBeDefined();
+        expect(modules['ModuleToBeStarted'].instance).toBeNull();
+
         expect(modStarted).toBeFalsy();
         expect(modHasDep1).toBeFalsy();
-        expect(modHasNotDep2).toBeFalsy();
+        expect(modHasNoDep2).toBeFalsy();
         expect(param1).toBeFalsy();
         expect(param2).toBeFalsy();
 
@@ -120,14 +124,44 @@ describe('Global Sandbox API', function () {
 
         expect(modStarted).toBeTruthy();
         expect(modHasDep1).toBeTruthy();
-        expect(modHasNotDep2).toBeTruthy();
+        expect(modHasNoDep2).toBeTruthy();
         expect(param1).toEqual('param1');
         expect(param2).toEqual('param2');
         expect(modToBeStarted.depName).toEqual('module1');
+        expect(modules['ModuleToBeStarted'].instance).toBeDefined();
 
     });
 
-    it('registers and starts a module [Sandbox.use]', function () {});
+    it('registers and starts a module [Sandbox.use]', function () {
+
+        var modules = Sandbox.__modules__,
+            modUsed = false,
+            modHasDep1 = false,
+            modHasNoDep2 = false,
+            modHasNoDep3 = false;
+
+        var modToBeUsed = Sandbox.use('ModuleToBeUsed', 'ModuleTest3', function (toolbox) {
+            modUsed = true;
+            modHasDep1 = !!toolbox.ModuleTest3;
+            modHasNoDep2 = !toolbox.ModuleTest1;
+            modHasNoDep3 = !toolbox.ModuleTest2;
+
+            return {
+                name: 'moduleToBeUsed',
+                depName: toolbox.ModuleTest3.name
+            };
+        });
+
+        expect(modules['ModuleToBeUsed']).toBeDefined();
+        expect(modules['ModuleToBeUsed'].instance).toBeDefined();
+
+        expect(modUsed).toBeTruthy();
+        expect(modHasDep1).toBeTruthy();
+        expect(modHasNoDep2).toBeTruthy();
+        expect(modHasNoDep3).toBeTruthy();
+        expect(modToBeUsed.depName).toEqual('module3');
+
+    });
 
     it('starts all the modules at once [Sandbox.startAll]', function () {});
 
