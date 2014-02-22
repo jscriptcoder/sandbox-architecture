@@ -26,9 +26,35 @@ module Sandbox {
     var modules = {};
 
     /**
+     * We'll use it to read the internal [[Class]] property
+     * @type Function
+     * @private
+     */
+    var toString = Object.prototype.toString;
+
+    /**
+     * Determines if a reference is an Object
+     * @param {Any} value
+     * @returns {boolean} whether or not it's an Object
+     * @private
+     */
+    function isObject(value){
+        return value != null && typeof value === 'object';
+    }
+
+    /**
+     * Determines if a reference is an Array
+     * @param {Any} value
+     * @returns {boolean} whether or not it's an Array
+     */
+    function isArray(value) {
+        return toString.call(value) === '[object Array]';
+    }
+
+    /**
      * Returns module definition
      * @param {String} moduleName
-     * @returns Object
+     * @returns {Object} module definition
      * @private
      */
     function getModule(moduleName) {
@@ -38,7 +64,7 @@ module Sandbox {
     /**
      * Returns module instance
      * @param {String} moduleName
-     * @returns Object
+     * @returns {Object} module instance
      * @private
      */
     function getInstance(moduleName) {
@@ -78,44 +104,18 @@ module Sandbox {
          * @public
          */
         constructor(requires) {
-            var mod;
 
-            // converts to an array
-            if (!(requires instanceof Array)) requires = [requires];
+            if (requires) {
 
-            // loops over all the requires modules
-            requires.forEach((modName) => {
-
-                if (typeof modName === 'string') {
-
-                    mod = modules[modName];
-
-                    if (mod) { // registered module. Attach it to the toolbox
-
-                        if (!this[modName]) {
-
-                            if (mod.instance) {
-                                this[modName] = mod.instance;
-                            } else if (typeof mod.factory === 'function') {
-                                // loads dependencies recursively
-                                this[modName] = mod.instance = mod.factory(new Toolbox(mod.requires));
-                            }
-
-                        } else {
-                            throw Error(modName + ' already exists in the toolbox.');
-                        }
-
-                    }
-
-                } else if (modName && typeof modName === 'object') {
+                if (isObject(requires) && !isArray(requires)) {
                     // given instances: {module1: instance1, module2: instance2, ...}. Attach them to the toolbox
 
-                    for (var p in modName) {
+                    for (var modName in requires) {
 
-                        if (modName.hasOwnProperty(p)) {
+                        if (requires.hasOwnProperty(modName)) {
 
-                            if (!this[p]) {
-                                this[p] = modName[p];
+                            if (!this[modName]) {
+                                this[modName] = requires[modName];
                             } else {
                                 throw Error(modName + ' already exists in the toolbox.');
                             }
@@ -123,9 +123,46 @@ module Sandbox {
                         }
 
                     }
+
+                } else {
+
+                    var mod;
+
+                    // converts to an array
+                    if (!isArray(requires)) requires = [requires];
+
+                    // loops over all the requires modules
+                    requires.forEach((modName) => {
+
+                        if (typeof modName === 'string') {
+
+                            mod = modules[modName];
+
+                            if (mod) { // registered module. Attach it to the toolbox
+
+                                if (!this[modName]) {
+
+                                    if (mod.instance) {
+                                        this[modName] = mod.instance;
+                                    } else if (typeof mod.factory === 'function') {
+                                        // loads dependencies recursively
+                                        this[modName] = mod.instance = mod.factory(new Toolbox(mod.requires));
+                                    }
+
+                                } else {
+                                    throw Error(modName + ' already exists in the toolbox.');
+                                }
+
+                            }
+
+                        }
+
+                    });
+
                 }
 
-            });
+            }
+
         }
 
     }
@@ -337,6 +374,10 @@ module Sandbox {
     export function remove(modName, ...args) {
         args.unshift(modName);
         stop.apply(null, args);
+
+        // let's free memory
+        modules[modName] = null;
+        delete modules[modName];
     }
 
     /**

@@ -24,9 +24,35 @@ var Sandbox;
     var modules = {};
 
     /**
+    * We'll use it to read the internal [[Class]] property
+    * @type Function
+    * @private
+    */
+    var toString = Object.prototype.toString;
+
+    /**
+    * Determines if a reference is an Object
+    * @param {Any} value
+    * @returns {boolean} whether or not it's an Object
+    * @private
+    */
+    function isObject(value) {
+        return value != null && typeof value === 'object';
+    }
+
+    /**
+    * Determines if a reference is an Array
+    * @param {Any} value
+    * @returns {boolean} whether or not it's an Array
+    */
+    function isArray(value) {
+        return toString.call(value) === '[object Array]';
+    }
+
+    /**
     * Returns module definition
     * @param {String} moduleName
-    * @returns Object
+    * @returns {Object} module definition
     * @private
     */
     function getModule(moduleName) {
@@ -36,7 +62,7 @@ var Sandbox;
     /**
     * Returns module instance
     * @param {String} moduleName
-    * @returns Object
+    * @returns {Object} module instance
     * @private
     */
     function getInstance(moduleName) {
@@ -74,41 +100,45 @@ var Sandbox;
             * @private
             */
             this.__instance__ = getInstance;
-            var mod;
-
-            // converts to an array
-            if (!(requires instanceof Array))
-                requires = [requires];
-
-            // loops over all the requires modules
-            requires.forEach(function (modName) {
-                if (typeof modName === 'string') {
-                    mod = modules[modName];
-
-                    if (mod) {
-                        if (!_this[modName]) {
-                            if (mod.instance) {
-                                _this[modName] = mod.instance;
-                            } else if (typeof mod.factory === 'function') {
-                                // loads dependencies recursively
-                                _this[modName] = mod.instance = mod.factory(new Toolbox(mod.requires));
-                            }
-                        } else {
-                            throw Error(modName + ' already exists in the toolbox.');
-                        }
-                    }
-                } else if (modName && typeof modName === 'object') {
-                    for (var p in modName) {
-                        if (modName.hasOwnProperty(p)) {
-                            if (!_this[p]) {
-                                _this[p] = modName[p];
+            if (requires) {
+                if (isObject(requires) && !isArray(requires)) {
+                    for (var modName in requires) {
+                        if (requires.hasOwnProperty(modName)) {
+                            if (!this[modName]) {
+                                this[modName] = requires[modName];
                             } else {
                                 throw Error(modName + ' already exists in the toolbox.');
                             }
                         }
                     }
+                } else {
+                    var mod;
+
+                    // converts to an array
+                    if (!isArray(requires))
+                        requires = [requires];
+
+                    // loops over all the requires modules
+                    requires.forEach(function (modName) {
+                        if (typeof modName === 'string') {
+                            mod = modules[modName];
+
+                            if (mod) {
+                                if (!_this[modName]) {
+                                    if (mod.instance) {
+                                        _this[modName] = mod.instance;
+                                    } else if (typeof mod.factory === 'function') {
+                                        // loads dependencies recursively
+                                        _this[modName] = mod.instance = mod.factory(new Toolbox(mod.requires));
+                                    }
+                                } else {
+                                    throw Error(modName + ' already exists in the toolbox.');
+                                }
+                            }
+                        }
+                    });
                 }
-            });
+            }
         }
         return Toolbox;
     })();
@@ -331,6 +361,10 @@ var Sandbox;
         }
         args.unshift(modName);
         stop.apply(null, args);
+
+        // let's free memory
+        modules[modName] = null;
+        delete modules[modName];
     }
     Sandbox.remove = remove;
 

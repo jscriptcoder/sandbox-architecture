@@ -244,10 +244,75 @@ describe('Global Sandbox API', function () {
 
     });
 
-    it('stops and removes a module [Sandbox.remove]', function () {});
+    it('stops and removes a module [Sandbox.remove]', function () {
 
-    it('removes all the modules at once [Sandbox.removeAll]', function () {});
+        var modules = Sandbox.__modules__,
+            modDestroyed = false,
+            param1, param2;
 
-    it('extends the toolbox [Sandbox.extend]', function () {});
+        Sandbox.use('moduleToRemove', function () {
+            return {
+                destroy: function (p1, p2) {
+                    modDestroyed = true;
+                    param1 = p1;
+                    param2 = p2;
+                }
+            };
+        });
+
+        expect(modules['moduleToRemove']).toBeDefined();
+        expect(param1).toBeFalsy();
+        expect(param2).toBeFalsy();
+
+        Sandbox.remove('moduleToRemove', 'param1', 'param2');
+
+        expect(modules['moduleToRemove']).toBeUndefined();
+        expect(param1).toEqual('param1');
+        expect(param2).toEqual('param2');
+
+    });
+
+    it('removes all the modules at once [Sandbox.removeAll]', function () {
+
+        var modules = Sandbox.__modules__,
+            mod1Destroyed = false,
+            mod2Destroyed = false,
+            mod3Destroyed = false;
+
+        Sandbox.use('Module1ToRemove', function () {
+            return { destroy: function () { mod1Destroyed = true; } };
+        });
+
+        Sandbox.use('Module2ToRemove', function () {
+            return { destroy: function () { mod2Destroyed = true; } };
+        });
+
+        Sandbox.use('Module3ToRemove', function () {
+            return { destroy: function () { mod3Destroyed = true; } };
+        });
+
+        expect(modules['Module1ToRemove']).toBeDefined();
+        expect(modules['Module2ToRemove']).toBeDefined();
+        expect(modules['Module3ToRemove']).toBeDefined();
+        expect(mod1Destroyed).toBeFalsy();
+        expect(mod2Destroyed).toBeFalsy();
+        expect(mod3Destroyed).toBeFalsy();
+
+        Sandbox.removeAll();
+
+        expect(modules['Module1ToRemove']).toBeUndefined();
+        expect(modules['Module2ToRemove']).toBeUndefined();
+        expect(modules['Module3ToRemove']).toBeUndefined();
+        expect(mod1Destroyed).toBeTruthy();
+        expect(mod2Destroyed).toBeTruthy();
+        expect(mod3Destroyed).toBeTruthy();
+
+    });
+
+    it('extends the toolbox [Sandbox.extend]', function () {
+
+
+
+    });
 
 });
