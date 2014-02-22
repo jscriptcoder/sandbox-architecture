@@ -41,7 +41,10 @@ describe('Global Sandbox API', function () {
         var modules = Sandbox.__modules__;
 
         expect(modules['ModuleTest1']).toBeDefined();
+        expect(modules['ModuleTest1'].instance).toBeNull();
         expect(modules['ModuleTest2']).toBeDefined();
+        expect(modules['ModuleTest2'].instance).toBeNull();
+        expect(modules['ModuleTest3'].instance).toBeNull();
         expect(modules['ModuleTest3'].requires[0]).toEqual('ModuleTest1');
         expect(modules['ModuleTest3'].requires[1]).toEqual('ModuleTest2');
 
@@ -86,7 +89,43 @@ describe('Global Sandbox API', function () {
 
     });
 
-    it('starts modules [Sandbox.start]', function () {});
+    it('starts modules [Sandbox.start]', function () {
+
+        var modStarted = false,
+            modHasDep1 = false,
+            modHasNotDep2 = false,
+            param1, param2;
+
+        Sandbox.register('ModuleToBeStarted', 'ModuleTest1', function (toolbox, p1, p2) {
+            modStarted = true;
+            modHasDep1 = !!toolbox.ModuleTest1;
+            modHasNotDep2 = !toolbox.ModuleTest2;
+
+            param1 = p1;
+            param2 = p2;
+
+            return {
+                name: 'moduleToBeStarted',
+                depName: toolbox.ModuleTest1.name
+            };
+        });
+
+        expect(modStarted).toBeFalsy();
+        expect(modHasDep1).toBeFalsy();
+        expect(modHasNotDep2).toBeFalsy();
+        expect(param1).toBeFalsy();
+        expect(param2).toBeFalsy();
+
+        var modToBeStarted = Sandbox.start('ModuleToBeStarted', 'param1', 'param2');
+
+        expect(modStarted).toBeTruthy();
+        expect(modHasDep1).toBeTruthy();
+        expect(modHasNotDep2).toBeTruthy();
+        expect(param1).toEqual('param1');
+        expect(param2).toEqual('param2');
+        expect(modToBeStarted.depName).toEqual('module1');
+
+    });
 
     it('registers and starts a module [Sandbox.use]', function () {});
 
