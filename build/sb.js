@@ -91,13 +91,7 @@ var Sandbox;
                                 _this[modName] = mod.instance;
                             } else if (typeof mod.factory === 'function') {
                                 // loads dependencies recursively
-                                if (mod.requires.length) {
-                                    mod.instance = mod.factory(new Toolbox(mod.requires));
-                                } else {
-                                    mod.instance = mod.factory(_this);
-                                }
-
-                                _this[modName] = mod.instance;
+                                _this[modName] = mod.instance = mod.factory(new Toolbox(mod.requires));
                             }
                         } else {
                             throw Error(modName + ' already exists in the toolbox.');
@@ -396,6 +390,6 @@ var Sandbox;
     }
     Sandbox.extend = extend;
 
-    // this is for testing purposes
+    // for testing purposes
     Sandbox.__modules__ = modules;
 })(Sandbox || (Sandbox = {}));

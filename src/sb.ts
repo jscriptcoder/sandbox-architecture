@@ -97,16 +97,8 @@ module Sandbox {
                             if (mod.instance) {
                                 this[modName] = mod.instance;
                             } else if (typeof mod.factory === 'function') {
-
                                 // loads dependencies recursively
-                                if (mod.requires.length) {
-                                    mod.instance = mod.factory(new Toolbox(mod.requires));
-                                } else {
-                                    mod.instance = mod.factory(this);
-                                }
-
-                                this[modName] = mod.instance;
-
+                                this[modName] = mod.instance = mod.factory(new Toolbox(mod.requires));
                             }
 
                         } else {
@@ -403,6 +395,6 @@ module Sandbox {
 
     }
 
-    // this is for testing purposes
+    // for testing purposes
     export var __modules__ = modules;
 }

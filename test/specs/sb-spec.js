@@ -117,8 +117,8 @@ describe('Global Sandbox API', function () {
         expect(modStarted).toBeFalsy();
         expect(modHasDep1).toBeFalsy();
         expect(modHasNoDep2).toBeFalsy();
-        expect(param1).toBeFalsy();
-        expect(param2).toBeFalsy();
+        expect(param1).toBeUndefined();
+        expect(param2).toBeUndefined();
 
         var modToBeStarted = Sandbox.start('ModuleToBeStarted', 'param1', 'param2');
 
@@ -163,14 +163,91 @@ describe('Global Sandbox API', function () {
 
     });
 
-    it('starts all the modules at once [Sandbox.startAll]', function () {});
+    it('starts all the modules at once [Sandbox.startAll]', function () {
 
-    it('stops modules [Sandbox.stop]', function () {});
+        var mod1Started = false,
+            mod2Started = false,
+            mod3Started = false;
 
-    it('stops all the modules at once [Sandbox.stopAll]', function () {});
+        Sandbox.register('Module1ToBeStarted', function () { mod1Started = true; });
+        Sandbox.register('Module2ToBeStarted', function () { mod2Started = true; });
+        Sandbox.register('Module3ToBeStarted', function () { mod3Started = true; });
+
+        expect(mod1Started).toBeFalsy();
+        expect(mod2Started).toBeFalsy();
+        expect(mod3Started).toBeFalsy();
+
+        Sandbox.startAll();
+
+        expect(mod1Started).toBeTruthy();
+        expect(mod2Started).toBeTruthy();
+        expect(mod3Started).toBeTruthy();
+
+    });
+
+    it('stops modules [Sandbox.stop]', function () {
+
+        var modules = Sandbox.__modules__,
+            modDestroyed = false,
+            param1, param2;
+
+        Sandbox.use('moduleToStop', function () {
+            return {
+                destroy: function (p1, p2) {
+                    modDestroyed = true;
+                    param1 = p1;
+                    param2 = p2;
+                }
+            };
+        });
+
+        expect(modules['moduleToStop'].instance).toBeDefined();
+        expect(modules['moduleToStop'].instance.destroy).toEqual(jasmine.any(Function));
+        expect(param1).toBeFalsy();
+        expect(param2).toBeFalsy();
+
+        Sandbox.stop('moduleToStop', 'param1', 'param2');
+
+        expect(modules['moduleToStop'].instance).toBeNull();
+        expect(param1).toEqual('param1');
+        expect(param2).toEqual('param2');
+
+    });
+
+    it('stops all the modules at once [Sandbox.stopAll]', function () {
+
+        var mod1Destroyed = false,
+            mod2Destroyed = false,
+            mod3Destroyed = false;
+
+        Sandbox.use('Module1ToStop', function () {
+            return { destroy: function () { mod1Destroyed = true; } };
+        });
+
+        Sandbox.use('Module2ToStop', function () {
+            return { destroy: function () { mod2Destroyed = true; } };
+        });
+
+        Sandbox.use('Module3ToStop', function () {
+            return { destroy: function () { mod3Destroyed = true; } };
+        });
+
+        expect(mod1Destroyed).toBeFalsy();
+        expect(mod2Destroyed).toBeFalsy();
+        expect(mod3Destroyed).toBeFalsy();
+
+        Sandbox.stopAll();
+
+        expect(mod1Destroyed).toBeTruthy();
+        expect(mod2Destroyed).toBeTruthy();
+        expect(mod3Destroyed).toBeTruthy();
+
+    });
 
     it('stops and removes a module [Sandbox.remove]', function () {});
 
     it('removes all the modules at once [Sandbox.removeAll]', function () {});
+
+    it('extends the toolbox [Sandbox.extend]', function () {});
 
 });
