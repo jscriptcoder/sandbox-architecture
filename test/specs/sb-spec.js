@@ -95,12 +95,23 @@ describe('Global Sandbox API', function () {
             modStarted = false,
             modHasDep1 = false,
             modHasNoDep2 = false,
-            param1, param2;
+            modHasJquery = false,
+            modHasExtjs = false,
+            param1, param2,
+            dependencies = [
+                'ModuleTest1',
+                {
+                    jquery: { name: 'jquery' },
+                    extjs: { name: 'extjs' }
+                }
+            ];
 
-        Sandbox.register('ModuleToBeStarted', 'ModuleTest1', function (toolbox, p1, p2) {
+        Sandbox.register('ModuleToBeStarted', dependencies, function (toolbox, p1, p2) {
             modStarted = true;
             modHasDep1 = !!toolbox.ModuleTest1;
             modHasNoDep2 = !toolbox.ModuleTest2;
+            modHasJquery = toolbox.jquery && toolbox.jquery.name === 'jquery';
+            modHasExtjs = toolbox.extjs && toolbox.extjs.name === 'extjs';
 
             param1 = p1;
             param2 = p2;
@@ -117,6 +128,8 @@ describe('Global Sandbox API', function () {
         expect(modStarted).toBeFalsy();
         expect(modHasDep1).toBeFalsy();
         expect(modHasNoDep2).toBeFalsy();
+        expect(modHasJquery).toBeFalsy();
+        expect(modHasExtjs).toBeFalsy();
         expect(param1).toBeUndefined();
         expect(param2).toBeUndefined();
 
@@ -125,6 +138,8 @@ describe('Global Sandbox API', function () {
         expect(modStarted).toBeTruthy();
         expect(modHasDep1).toBeTruthy();
         expect(modHasNoDep2).toBeTruthy();
+        expect(modHasJquery).toBeTruthy();
+        expect(modHasExtjs).toBeTruthy();
         expect(param1).toEqual('param1');
         expect(param2).toEqual('param2');
         expect(modToBeStarted.depName).toEqual('module1');
@@ -138,13 +153,16 @@ describe('Global Sandbox API', function () {
             modUsed = false,
             modHasDep1 = false,
             modHasNoDep2 = false,
-            modHasNoDep3 = false;
+            modHasNoDep3 = false,
+            modHasAngular = false,
+            dependencies = [ 'ModuleTest3', { angular: { name: 'angular' } } ];
 
-        var modToBeUsed = Sandbox.use('ModuleToBeUsed', 'ModuleTest3', function (toolbox) {
+        var modToBeUsed = Sandbox.use('ModuleToBeUsed', dependencies, function (toolbox) {
             modUsed = true;
             modHasDep1 = !!toolbox.ModuleTest3;
             modHasNoDep2 = !toolbox.ModuleTest1;
             modHasNoDep3 = !toolbox.ModuleTest2;
+            modHasAngular = toolbox.angular && toolbox.angular.name === 'angular';
 
             return {
                 name: 'moduleToBeUsed',
@@ -159,6 +177,7 @@ describe('Global Sandbox API', function () {
         expect(modHasDep1).toBeTruthy();
         expect(modHasNoDep2).toBeTruthy();
         expect(modHasNoDep3).toBeTruthy();
+        expect(modHasAngular).toBeTruthy();
         expect(modToBeUsed.depName).toEqual('module3');
 
     });
@@ -311,7 +330,53 @@ describe('Global Sandbox API', function () {
 
     it('extends the toolbox [Sandbox.extend]', function () {
 
+        var rightToolboxMod1 = false,
+            rightToolboxMod2 = false,
+            rightToolboxMod3 = false;
 
+        Sandbox.extend('func', function () {});
+
+        Sandbox.extend(function (tbproto) {
+            tbproto.prop = 'prop';
+        });
+
+        Sandbox.extend({
+            anotherFunc: function () {},
+            anotherProp: 'another prop'
+        });
+
+        Sandbox.register('Module1WithExtendedTB', function (toolbox) {
+            var isExtended = (typeof toolbox.func === 'function');
+            isExtended = isExtended && (toolbox.prop ===  'prop');
+            isExtended = isExtended && (typeof toolbox.anotherFunc ===  'function');
+            isExtended = isExtended && (toolbox.anotherProp ===  'another prop');
+
+            rightToolboxMod1 = isExtended && !toolbox.ModuleTest3;
+        });
+
+        Sandbox.register('Module2WithExtendedTB', 'ModuleTest1', function (toolbox) {
+            var isExtended = (typeof toolbox.func === 'function');
+            isExtended = isExtended && (toolbox.prop ===  'prop');
+            isExtended = isExtended && (typeof toolbox.anotherFunc ===  'function');
+            isExtended = isExtended && (toolbox.anotherProp ===  'another prop');
+
+            rightToolboxMod2 = isExtended && !!toolbox.ModuleTest1;
+        });
+
+        Sandbox.register('Module3WithExtendedTB', ['ModuleTest3', { test: true }], function (toolbox) {
+            var isExtended = (typeof toolbox.func === 'function');
+            isExtended = isExtended && (toolbox.prop ===  'prop');
+            isExtended = isExtended && (typeof toolbox.anotherFunc ===  'function');
+            isExtended = isExtended && (toolbox.anotherProp ===  'another prop');
+
+            rightToolboxMod3 = isExtended && !!toolbox.ModuleTest3 && toolbox.test && !toolbox.ModuleTest2;
+        });
+
+        Sandbox.startAll();
+
+        expect(rightToolboxMod1).toBeTruthy();
+        expect(rightToolboxMod2).toBeTruthy();
+        expect(rightToolboxMod3).toBeTruthy();
 
     });
 

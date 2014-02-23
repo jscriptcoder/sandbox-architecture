@@ -26,29 +26,12 @@ module Sandbox {
     var modules = {};
 
     /**
-     * We'll use it to read the internal [[Class]] property
-     * @type Function
-     * @private
-     */
-    var toString = Object.prototype.toString;
-
-    /**
-     * Determines if a reference is an Object
-     * @param {Any} value
-     * @returns {boolean} whether or not it's an Object
-     * @private
-     */
-    function isObject(value){
-        return value != null && typeof value === 'object';
-    }
-
-    /**
      * Determines if a reference is an Array
      * @param {Any} value
      * @returns {boolean} whether or not it's an Array
      */
     function isArray(value) {
-        return toString.call(value) === '[object Array]';
+        return Object.prototype.toString.call(value) === '[object Array]';
     }
 
     /**
@@ -107,59 +90,53 @@ module Sandbox {
 
             if (requires) {
 
-                if (isObject(requires) && !isArray(requires)) {
-                    // given instances: {module1: instance1, module2: instance2, ...}. Attach them to the toolbox
+                // converts to an array
+                if (!isArray(requires)) requires = [requires];
 
-                    for (var modName in requires) {
+                // loops over all the requires modules
+                requires.forEach((modName) => {
 
-                        if (requires.hasOwnProperty(modName)) {
+                    if (typeof modName === 'string') {
+
+                        var mod = modules[modName];
+
+                        if (mod) { // registered module. Attach it to the toolbox
 
                             if (!this[modName]) {
-                                this[modName] = requires[modName];
+
+                                if (mod.instance) {
+                                    this[modName] = mod.instance;
+                                } else if (typeof mod.factory === 'function') {
+                                    // loads dependencies recursively
+                                    this[modName] = mod.instance = mod.factory(new Toolbox(mod.requires));
+                                }
+
                             } else {
                                 throw Error(modName + ' already exists in the toolbox.');
                             }
 
                         }
 
-                    }
+                    } else if (typeof modName === 'object') {
+                        // given instances: {module1: instance1, module2: instance2, ...}. Attach them to the toolbox
 
-                } else {
+                        for (var p in modName) {
 
-                    var mod;
+                            if (modName.hasOwnProperty(p)) {
 
-                    // converts to an array
-                    if (!isArray(requires)) requires = [requires];
-
-                    // loops over all the requires modules
-                    requires.forEach((modName) => {
-
-                        if (typeof modName === 'string') {
-
-                            mod = modules[modName];
-
-                            if (mod) { // registered module. Attach it to the toolbox
-
-                                if (!this[modName]) {
-
-                                    if (mod.instance) {
-                                        this[modName] = mod.instance;
-                                    } else if (typeof mod.factory === 'function') {
-                                        // loads dependencies recursively
-                                        this[modName] = mod.instance = mod.factory(new Toolbox(mod.requires));
-                                    }
-
+                                if (!this[p]) {
+                                    this[p] = modName[p];
                                 } else {
-                                    throw Error(modName + ' already exists in the toolbox.');
+                                    throw Error(p + ' already exists in the toolbox.');
                                 }
 
                             }
 
                         }
 
-                    });
+                    }
 
-                }
+                });
 
             }
 
@@ -421,21 +398,35 @@ module Sandbox {
      * });
      *
      * @memberof Sandbox
-     * @param {String} name - name of the member
+     * @param {String|Object} name - name of the member or dictionary of members
      * @param {Any} member - member to add to the toolbox
+     * @throws {Error} member_name is already added to the toolbox
+     * @public
      */
     export function extend(name, member) {
 
-        if (typeof name === 'function') {
-            name(Toolbox.prototype);
-        } else if (!Toolbox.prototype[name]) {
-            Toolbox.prototype[name] = member;
-        } else {
-            throw Error(name + ' is already added to the toolbox');
+        if (name) {
+
+            if (typeof name === 'object') {
+
+                for (var p in name) {
+                    if (name.hasOwnProperty(p)) {
+                        extend(p, name[p]);
+                    }
+                }
+
+            } else if (typeof name === 'function') {
+                name(Toolbox.prototype);
+            } else if (!Toolbox.prototype[name]) {
+                Toolbox.prototype[name] = member;
+            } else {
+                throw Error(name + ' is already added to the toolbox');
+            }
+
         }
 
     }
 
-    // for testing purposes
+    // we need to export the modules for testing purposes
     export var __modules__ = modules;
 }

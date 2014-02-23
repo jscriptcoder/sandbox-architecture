@@ -24,29 +24,12 @@ var Sandbox;
     var modules = {};
 
     /**
-    * We'll use it to read the internal [[Class]] property
-    * @type Function
-    * @private
-    */
-    var toString = Object.prototype.toString;
-
-    /**
-    * Determines if a reference is an Object
-    * @param {Any} value
-    * @returns {boolean} whether or not it's an Object
-    * @private
-    */
-    function isObject(value) {
-        return value != null && typeof value === 'object';
-    }
-
-    /**
     * Determines if a reference is an Array
     * @param {Any} value
     * @returns {boolean} whether or not it's an Array
     */
     function isArray(value) {
-        return toString.call(value) === '[object Array]';
+        return Object.prototype.toString.call(value) === '[object Array]';
     }
 
     /**
@@ -101,43 +84,39 @@ var Sandbox;
             */
             this.__instance__ = getInstance;
             if (requires) {
-                if (isObject(requires) && !isArray(requires)) {
-                    for (var modName in requires) {
-                        if (requires.hasOwnProperty(modName)) {
-                            if (!this[modName]) {
-                                this[modName] = requires[modName];
+                // converts to an array
+                if (!isArray(requires))
+                    requires = [requires];
+
+                // loops over all the requires modules
+                requires.forEach(function (modName) {
+                    if (typeof modName === 'string') {
+                        var mod = modules[modName];
+
+                        if (mod) {
+                            if (!_this[modName]) {
+                                if (mod.instance) {
+                                    _this[modName] = mod.instance;
+                                } else if (typeof mod.factory === 'function') {
+                                    // loads dependencies recursively
+                                    _this[modName] = mod.instance = mod.factory(new Toolbox(mod.requires));
+                                }
                             } else {
                                 throw Error(modName + ' already exists in the toolbox.');
                             }
                         }
-                    }
-                } else {
-                    var mod;
-
-                    // converts to an array
-                    if (!isArray(requires))
-                        requires = [requires];
-
-                    // loops over all the requires modules
-                    requires.forEach(function (modName) {
-                        if (typeof modName === 'string') {
-                            mod = modules[modName];
-
-                            if (mod) {
-                                if (!_this[modName]) {
-                                    if (mod.instance) {
-                                        _this[modName] = mod.instance;
-                                    } else if (typeof mod.factory === 'function') {
-                                        // loads dependencies recursively
-                                        _this[modName] = mod.instance = mod.factory(new Toolbox(mod.requires));
-                                    }
+                    } else if (typeof modName === 'object') {
+                        for (var p in modName) {
+                            if (modName.hasOwnProperty(p)) {
+                                if (!_this[p]) {
+                                    _this[p] = modName[p];
                                 } else {
-                                    throw Error(modName + ' already exists in the toolbox.');
+                                    throw Error(p + ' already exists in the toolbox.');
                                 }
                             }
                         }
-                    });
-                }
+                    }
+                });
             }
         }
         return Toolbox;
@@ -410,20 +389,30 @@ var Sandbox;
     * });
     *
     * @memberof Sandbox
-    * @param {String} name - name of the member
+    * @param {String|Object} name - name of the member or dictionary of members
     * @param {Any} member - member to add to the toolbox
+    * @throws {Error} member_name is already added to the toolbox
+    * @public
     */
     function extend(name, member) {
-        if (typeof name === 'function') {
-            name(Toolbox.prototype);
-        } else if (!Toolbox.prototype[name]) {
-            Toolbox.prototype[name] = member;
-        } else {
-            throw Error(name + ' is already added to the toolbox');
+        if (name) {
+            if (typeof name === 'object') {
+                for (var p in name) {
+                    if (name.hasOwnProperty(p)) {
+                        extend(p, name[p]);
+                    }
+                }
+            } else if (typeof name === 'function') {
+                name(Toolbox.prototype);
+            } else if (!Toolbox.prototype[name]) {
+                Toolbox.prototype[name] = member;
+            } else {
+                throw Error(name + ' is already added to the toolbox');
+            }
         }
     }
     Sandbox.extend = extend;
 
-    // for testing purposes
+    // we need to export the modules for testing purposes
     Sandbox.__modules__ = modules;
 })(Sandbox || (Sandbox = {}));
