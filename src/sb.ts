@@ -29,6 +29,7 @@ module Sandbox {
      * Determines if a reference is an Array
      * @param {Any} value
      * @returns {boolean} whether or not it's an Array
+     * @private
      */
     function isArray(value) {
         return Object.prototype.toString.call(value) === '[object Array]';
