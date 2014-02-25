@@ -19,7 +19,7 @@ For more details about the API, please have a look at the spec for the unit test
 
 **Sandbox.register**
 
-> Registers a module before for lazy initialization.
+> Registers a module for lazy initialization.
 
 _Syntax:_
 ```javascript
@@ -32,7 +32,7 @@ Sandbox.register('MyModule', [
 
     'ModuleDep1',
     'ModuleDep2'
-    
+
 ], function (toolbox, arg1, arg2) {
 
     // private memebers
