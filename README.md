@@ -19,7 +19,7 @@ For more details about the API, please have a look at the spec for the unit test
 
 **Sandbox.register**
 
-> Registers a module for lazy initialization, returning module's registration info
+> Registers a module for lazy initialization, returning module's registration info.
 
 _Syntax:_
 ```javascript
@@ -48,7 +48,7 @@ Sandbox.register('MyModule', [
 
 **Sandbox.run**
 
-> Runs a module right away without registration process, returning module's instance
+> Runs a module right away without registration process, returning module's instance.
 
 _Syntax:_
 ```javascript
@@ -73,7 +73,7 @@ Sandbox.run([
 
 **Sandbox.start**
 
-> Starts a module by calling its factory function and passing a new toolbox instance in. It returns the module's instance
+> Starts a module by calling its factory function and passing a new toolbox instance in. It returns the module's instance.
 
 _Syntax:_
 ```javascript
@@ -110,7 +110,7 @@ myModule.foo(); // returns true
 
 **Sandbox.use**
 
-> Uses a module right away - registers and starts it - returning the instance
+> Uses a module right away - registers and starts it - returning the instance.
 
 _Syntax:_
 ```javascript
@@ -139,89 +139,156 @@ Sandbox.use('AnotherModule', [
 
 **Sandbox.startAll**
 
->
+> Starts all the registered modules. Order of instantiation is not guaranteed.
 
 _Syntax:_
 ```javascript
-
+Sandbox.startAll(void): void
 ```
 
 _Example:_
 ```javascript
+Sandbox.register('Mod1', function () {...});
+Sandbox.register('Mod2', function () {...});
+Sandbox.register('Mod3', function () {...});
 
+//...
+
+Sandbox.startAll(); // will instantiate the previous modules
 ```
 ---
 
 **Sandbox.stop**
 
->
+> Stops a module destroying its instance. It calls "destroy" method if defined
 
 _Syntax:_
 ```javascript
-
+Sandbox.stop(modName: String, ...args: Any): void
 ```
 
 _Example:_
 ```javascript
+Sandbox.use('MyModule', 'ModuleDep', function () {
 
+    return {
+        destroy: function (arg1, arg2) {...}
+    }
+
+});
+
+//...
+
+Sandbox.stop('MyModule', 'test', false); // will call "destroy" method passing in "test" and false
 ```
 ---
 
 **Sandbox.stopAll**
 
->
+> Easy, stops all the modules ;-)
 
 _Syntax:_
 ```javascript
-
+Sandbox.stopAll(void): void
 ```
 
 _Example:_
 ```javascript
+Sandbox.use('Mod1', function () {...});
+Sandbox.use('Mod2', function () {...});
+Sandbox.use('Mod3', function () {...});
 
+// ...
+
+Sandbox.stopAll(); // stops all the previous modules
 ```
 ---
 
 **Sandbox.remove**
 
->
+> Stops and removes (deletes) a module in order to free memory
 
 _Syntax:_
 ```javascript
-
+Sandbox.remove(modName: String): void
 ```
 
 _Example:_
 ```javascript
+Sandbox.use('MyModule', 'ModuleDep', function () {
 
+    return {
+        destroy: function (arg1, arg2) {...}
+    }
+
+});
+
+//...
+
+Sandbox.remove('MyModule', false, true); // will call "destroy" method passing in false and true.
+// It'll also delete it from the internal list of registered modules
 ```
 ---
 
 **Sandbox.removeAll**
 
->
+> You guessed it, it removes all the modules
 
 _Syntax:_
 ```javascript
-
+Sandbox.removeAll(void): void
 ```
 
 _Example:_
 ```javascript
+Sandbox.use('Mod1', function () {...});
+Sandbox.use('Mod2', function () {...});
+Sandbox.use('Mod3', function () {...});
 
+// ...
+
+Sandbox.removeAll(); // stops and removes all the previous modules
 ```
 ---
 
 **Sandbox.extend**
 
->
+> Extends the toolbox adding new functionality to all the instances of it. This means, even though each module has its own instance, they'll all share the extensions.
 
 _Syntax:_
 ```javascript
-
+Sandbox.extend(name: String|Function, member: Any): void
 ```
 
 _Example:_
 ```javascript
+Sandbox.extend('myNewExtension', function (args) {...});
+Sandbox.extend('myAttribute', true);
+Sandbox.extend(function (tbproto) {
 
+    var MyClass = function () {...};
+    MyClass.prototype.method = function () {...};
+
+    tbproto.MyClass = MyClass;
+
+});
+
+// ...
+
+Sandbox.use('MyModule', function (toolbox) {
+
+    // import new stuff from the toolbox
+    var myNewExtension = toolbox.myNewExtension;
+    var newAttribute = toolbox.newAttribute;
+    var MyClass = toolbox.MyClass;
+
+});
+
+Sandbox.use('MyOtherModule', function (toolbox) {
+
+    // toolbox.myNewExtension is available here
+    // toolbox.newAttribute is available here
+    // toolbox.MyClass is available here
+
+});
 ```
