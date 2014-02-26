@@ -19,11 +19,11 @@ For more details about the API, please have a look at the spec for the unit test
 
 **Sandbox.register**
 
-> Registers a module for lazy initialization.
+> Registers a module for lazy initialization, returning module's registration info
 
 _Syntax:_
 ```javascript
-Sandbox.register(modName: String, dependencies: Array<String>, factory: (toolbox: Toolbox, ...args: Any) => Any): Object
+Sandbox.register(modName: String, require: Array<String>, factory: (toolbox: Toolbox, ...args: Any) => Any): Object
 ```
 
 _Example:_
@@ -47,28 +47,181 @@ Sandbox.register('MyModule', [
 ---
 
 **Sandbox.run**
-TO-DO
+
+> Runs a module right away without registration process, returning module's instance
+
+_Syntax:_
+```javascript
+Sandbox.run(require: Array<String>, factory: (toolbox: Toolbox) => Any): Object
+```
+
+_Example:_
+```javascript
+Sandbox.run([
+
+    'ModuleDep1',
+    'ModuleDep2'
+
+], function (toolbox) {
+
+    // toolbox.ModuleDep1 is available here
+    // toolbox.ModuleDep1 is available here
+
+});
+```
+---
 
 **Sandbox.start**
-TO-DO
+
+> Starts a module by calling its factory function and passing a new toolbox instance in. It returns the module's instance
+
+_Syntax:_
+```javascript
+Sandbox.start(modName: String, ...args: Any): Object
+```
+
+_Example:_
+```javascript
+Sandbox.register('MyModule', [
+
+    'ModuleDep1',
+    'ModuleDep2'
+
+], function (toolbox, arg1, arg2) {
+
+    var privVar;
+    function privFunc() {...}
+
+    return {
+        name: 'my-module ' + arg1,
+        foo: function () { return arg2; }
+    };
+
+});
+
+// ...
+
+var myModule = Sandbox.start('MyModule', 'test', true);
+
+console.log(myModule.name); // logs "my-module test"
+myModule.foo(); // returns true
+```
+---
 
 **Sandbox.use**
-TO-DO
+
+> Uses a module right away - registers and starts it - returning the instance
+
+_Syntax:_
+```javascript
+Sandbox.use(modName: String, require: Array<String>, factory: (toolbox: Toolbox, ...args: Any) => Any): Object
+```
+
+_Example:_
+```javascript
+Sandbox.use('AnotherModule', [
+
+    { $: jQuery, ng: angular},
+    'ModuleDep'
+
+], function (toolbox) {
+
+    // toolbox.$ is available here
+    // toolbox.ng is available here
+    // toolbox.ModuleDep is available here
+
+    // public interface
+    return {...}
+
+});
+```
+---
 
 **Sandbox.startAll**
-TO-DO
+
+>
+
+_Syntax:_
+```javascript
+
+```
+
+_Example:_
+```javascript
+
+```
+---
 
 **Sandbox.stop**
-TO-DO
+
+>
+
+_Syntax:_
+```javascript
+
+```
+
+_Example:_
+```javascript
+
+```
+---
 
 **Sandbox.stopAll**
-TO-DO
+
+>
+
+_Syntax:_
+```javascript
+
+```
+
+_Example:_
+```javascript
+
+```
+---
 
 **Sandbox.remove**
-TO-DO
+
+>
+
+_Syntax:_
+```javascript
+
+```
+
+_Example:_
+```javascript
+
+```
+---
 
 **Sandbox.removeAll**
-TO-DO
+
+>
+
+_Syntax:_
+```javascript
+
+```
+
+_Example:_
+```javascript
+
+```
+---
 
 **Sandbox.extend**
-TO-DO
+
+>
+
+_Syntax:_
+```javascript
+
+```
+
+_Example:_
+```javascript
+
+```
