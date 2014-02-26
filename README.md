@@ -286,9 +286,9 @@ Sandbox.use('MyModule', function (toolbox) {
 
 Sandbox.use('MyOtherModule', function (toolbox) {
 
-    // toolbox.myNewExtension is available here
-    // toolbox.newAttribute is available here
-    // toolbox.MyClass is available here
+    // toolbox.myNewExtension is also available here
+    // toolbox.newAttribute is also available here
+    // toolbox.MyClass is also available here
 
 });
 ```
