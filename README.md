@@ -131,7 +131,7 @@ Sandbox.use('AnotherModule', [
     // toolbox.ModuleDep is available here
 
     // public interface
-    return {...}
+    return {...};
 
 });
 ```
@@ -232,7 +232,7 @@ Sandbox.remove('MyModule', false, true); // will call "destroy" method passing i
 
 **Sandbox.removeAll**
 
-> You guessed it, it removes all the modules
+> You guessed it, it removes all the modules.
 
 _Syntax:_
 ```javascript
