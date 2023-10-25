@@ -292,3 +292,5 @@ Sandbox.use('MyOtherModule', function (toolbox) {
 
 });
 ```
+
+<!-- Sort 1 -->
